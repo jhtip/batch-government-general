@@ -29,9 +29,12 @@ import org.springframework.transaction.TransactionManager;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-//@ConditionalOnProperty(prefix = "spring.batch.job", name = "restaurant", havingValue = JobStepRestaurantConfiguration.JOB_NAME)
 public class JobStepRestaurantConfiguration {
 
+    /*
+        100개 레코드 단위 테스트용 CSV 파일 기준 Chunk 단위.
+        대용량 테스트 시 1000 으로 변경.
+    */
     private static final int CHUNK_SIZE = 10;
 
     public static final String JOB_NAME = "RESTAURANT_CSV_FLAT_FILE_CHUNK";
@@ -49,7 +52,6 @@ public class JobStepRestaurantConfiguration {
         var taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(10);
         taskExecutor.setMaxPoolSize(10);
-        //taskExecutor.setQueueCapacity(20);
         taskExecutor.setThreadNamePrefix("batch-thread-");
         taskExecutor.setWaitForTasksToCompleteOnShutdown(Boolean.TRUE);
         taskExecutor.initialize();
@@ -83,6 +85,9 @@ public class JobStepRestaurantConfiguration {
                 .build();
     }
 
+    /*
+        청크 단위 멀티 스레드 환경에 동시다발적 아이템 읽기를 락 제어.
+     */
     @Bean(name = JOB_NAME + "_READER")
     @StepScope
     public SynchronizedItemStreamReader<RestaurantDto> reader() throws Exception {
